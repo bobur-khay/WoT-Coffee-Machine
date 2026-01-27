@@ -35,6 +35,11 @@ export interface Order extends CoffeeConfig {
   tableNr: number[];
 }
 
+export interface CoffeeMachineStatus {
+  progress: number;
+  error: string;
+}
+
 export type Coordinates = [number, number];
 
 export type Board = Cell[][];

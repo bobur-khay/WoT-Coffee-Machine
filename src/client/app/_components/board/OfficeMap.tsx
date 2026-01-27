@@ -21,7 +21,8 @@ import {
   Board,
   EditMode,
   robotTdUrl,
-} from "../../../constants";
+  CoffeeMachineStatus,
+} from "../../../../constants";
 
 //@ts-expect-error not typed
 import { Core, Http } from "@node-wot/browser-bundle";
@@ -33,6 +34,10 @@ export function OfficeMap({
   hasSimulationStarted,
   robotPosition,
   setRobotPosition,
+  robotQueue,
+  setRobotQueue,
+  coffeeMachineStatus,
+  setCoffeeMachineStatus,
 }: {
   board: Board;
   setMap: Dispatch<SetStateAction<Board>>;
@@ -40,16 +45,16 @@ export function OfficeMap({
   hasSimulationStarted: boolean;
   robotPosition: Coordinates | null;
   setRobotPosition: (pos: Coordinates | null) => void;
+  robotQueue: Order[];
+  setRobotQueue: Dispatch<SetStateAction<Order[]>>;
+  coffeeMachineStatus: CoffeeMachineStatus;
+  setCoffeeMachineStatus: (status: CoffeeMachineStatus) => void;
 }) {
   // The height/width of the board in cells count
   const boardSize = board.length;
   const [boardSizePx, setMapSizePx] = useState(0);
   const [isMouseDown, setIsMouseDown] = useState(false);
   const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
-  const [coffeeMachineState, setCoffeeMachineState] = useState({
-    progress: 0,
-    error: "",
-  });
 
   const hasSimulationStartedRef = useRef(hasSimulationStarted);
 
@@ -95,7 +100,7 @@ export function OfficeMap({
 
   useEffect(() => {
     if (!hasSimulationStarted) {
-      setCoffeeMachineState({
+      setCoffeeMachineStatus({
         progress: 0,
         error: "",
       });
@@ -117,12 +122,26 @@ export function OfficeMap({
           cache: "no-store",
         });
         const status = await coffeeRes.json();
-        console.log("coffee status", status);
-        setCoffeeMachineState(status);
+        setCoffeeMachineStatus(status);
         await new Promise((r) => setTimeout(r, 200));
       }
     })();
   }, [hasSimulationStarted]);
+
+  useEffect(() => {
+    const order = robotQueue[0]?.tableNr;
+    if (
+      order &&
+      robotPosition?.[0] === order[0] &&
+      robotPosition[1] === order[1]
+    ) {
+      setRobotQueue((prev) => {
+        const _prev = [...prev];
+        _prev.shift();
+        return _prev;
+      });
+    }
+  }, [robotPosition]);
 
   const setCell = (x: number, y: number) => {
     if (editMode === "robot") {
@@ -150,16 +169,15 @@ export function OfficeMap({
     }
   };
 
-  // TODO: replace with browser-bundle
   const order = async () => {
-    setCurrentOrder(null);
-    const res = await fetch("/api/order", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(currentOrder),
-    });
-    if (!res.ok) {
-      alert("An error occured, pls refresh and try again");
+    if (currentOrder) {
+      fetch("/api/order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(currentOrder),
+      });
+      setRobotQueue((prev) => [...prev, currentOrder]);
+      setCurrentOrder(null);
     }
   };
 
@@ -236,6 +254,9 @@ export function OfficeMap({
               "relative border-t border-r border-gray-300 flex justify-center items-center",
               (!hasSimulationStarted || cell === Cell.TABLE) &&
                 "hover:bg-blue-50",
+              robotQueue.find(
+                (order) => order.tableNr[0] === x && order.tableNr[1] === y,
+              ) && "bg-yellow-100",
             )}
             key={`${x}${y}`}
             style={{
@@ -269,14 +290,13 @@ export function OfficeMap({
             />
             <div
               className={tm(
-                "absolute bottom-0 w-full bg-amber-200",
-                coffeeMachineState.progress === 100 && "bg-emerald-200",
-                coffeeMachineState.error && "bg-red-300",
+                "absolute bottom-0 w-full bg-emerald-200",
+                coffeeMachineStatus.error && "bg-red-300",
               )}
               style={{
                 height:
                   cell === Cell.COFFEE_MACHINE
-                    ? `${coffeeMachineState.progress}%`
+                    ? `${coffeeMachineStatus.progress}%`
                     : 0,
                 zIndex: 5,
               }}

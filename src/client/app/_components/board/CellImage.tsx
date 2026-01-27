@@ -2,8 +2,8 @@ import { ReactElement, ReactNode } from "react";
 import wall from "@/public/wall.png";
 import robot from "@/public/robot.png";
 import caffeeMachine from "@/public/caffe_machine.png";
-import { Close, Person } from "@mui/icons-material";
-import { Cell } from "../../../constants";
+import { Person } from "@mui/icons-material";
+import { Cell } from "../../../../constants";
 
 export function CellImage({
   cellType,
