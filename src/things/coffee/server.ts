@@ -33,7 +33,7 @@ servient.start().then(async (WoT) => {
     const thing = await WoT.produce(coffeeMachineTd);
     const coffeeMachine = new CoffeeMachine(
       CoffeeMachineState.WAITING,
-      10,
+      50,
       100,
       0,
       0,
@@ -54,13 +54,10 @@ servient.start().then(async (WoT) => {
 
     const brew = async () => {
       const order = coffeeMachine.queue[0];
-      if (!order) {
-        console.log("no order, waiting");
+      if (!order || coffeeMachine.state !== CoffeeMachineState.WAITING) {
         return undefined;
       }
-      if (coffeeMachine.state !== CoffeeMachineState.WAITING) {
-        errorMessage = "Coffee machine not ready";
-      } else if (coffeeMachine.waterLevel < 10) {
+      if (coffeeMachine.waterLevel < 10) {
         errorMessage = "Not enough water";
       } else if (coffeeMachine.beansAmount < 10) {
         errorMessage = "Not enough beans";
