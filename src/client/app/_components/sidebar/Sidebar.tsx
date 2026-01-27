@@ -1,4 +1,4 @@
-import { Button, Input, ToggleButtonGroup, Typography } from "@mui/joy";
+import { Button, Typography } from "@mui/joy";
 import { PlayArrow, Stop } from "@mui/icons-material";
 import {
   Board,
@@ -47,7 +47,6 @@ export function Sidebar({
   const isReadyForStart =
     robotPosition && doesPersonExist && doesCaffeeMachineExist;
 
-  //TODO: replace with browser-bundle
   const start = async () => {
     setHasSimulationStarted(true);
     const res = await fetch("/api/init", {

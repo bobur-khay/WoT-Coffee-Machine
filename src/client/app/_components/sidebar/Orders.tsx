@@ -17,7 +17,7 @@ export function Orders({
         </Alert>
       )}
       {robotQueue.map((order) => (
-        <div>
+        <div key={`${order.tableNr[0]}, ${order.tableNr[1]}`}>
           <Typography level="title-lg">
             Table {order.tableNr[0]}, {order.tableNr[1]}
           </Typography>
