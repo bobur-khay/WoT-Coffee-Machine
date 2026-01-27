@@ -11,13 +11,14 @@ export enum CoffeeType {
   LATTE_MACHIATO = "Latte Macchiato",
 }
 
-export enum CellType {
+export enum Cell {
   TABLE = "table",
   WALL = "wall",
-  ROBOT = "robot",
   COFFEE_MACHINE = "caffe_machine",
   NONE = "none",
 }
+
+export type EditMode = Cell | "robot";
 
 export enum CoffeeMachineState {
   WAITING = "waiting",
@@ -33,6 +34,10 @@ export interface CoffeeConfig {
 export interface Order extends CoffeeConfig {
   tableNr: number[];
 }
+
+export type Coordinates = [number, number];
+
+export type Board = Cell[][];
 
 export const coordinatesSchema = {
   type: "array" as const,

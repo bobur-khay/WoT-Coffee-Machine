@@ -1,11 +1,11 @@
 import { Servient } from "@node-wot/core";
 import { HttpClientFactory, HttpServer } from "@node-wot/binding-http";
 import {
-  CellType,
+  Cell,
   clientThings,
   CoffeeMachineState,
   coordinatesSchema,
-} from "../constants";
+} from "../../constants";
 
 enum RobotState {
   OFF = "off",
@@ -28,7 +28,7 @@ class Robot {
   public constructor(
     public queue: number[][],
     public state: RobotState,
-    public map: CellType[][],
+    public map: Cell[][],
     public position: number[],
     public coffeeMachinePosition: number[],
   ) {}
@@ -61,10 +61,10 @@ servient.start().then(async (WoT) => {
       return undefined;
     };
 
-    const findCoffeeMachine = (map: CellType): number[] | null => {
+    const findCoffeeMachine = (map: Cell): number[] | null => {
       for (let y = 0; y < map.length; y++) {
         for (let x = 0; x < map.length; x++) {
-          if (map[y][x] === CellType.COFFEE_MACHINE) {
+          if (map[y][x] === Cell.COFFEE_MACHINE) {
             return [x, y];
           }
         }
@@ -124,7 +124,7 @@ servient.start().then(async (WoT) => {
     };
 
     const getShortestPath = (
-      map: CellType[][],
+      map: Cell[][],
       start: number[],
       target: number[],
     ): number[][] => {
@@ -137,7 +137,7 @@ servient.start().then(async (WoT) => {
         // Target is always walkable, even if it's an object
         if (x === target[0] && y === target[1]) return true;
         // Only "NONE" is traversable space
-        return map[y][x] === CellType.NONE;
+        return map[y][x] === Cell.NONE;
       };
 
       // Helper for heuristic (Octile distance for 8-way movement)

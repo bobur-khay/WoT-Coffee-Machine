@@ -1,61 +1,64 @@
-import { MapType } from "@/app/page";
 import { Button, Input, ToggleButtonGroup, Typography } from "@mui/joy";
 import { useState } from "react";
 import { CellImage } from "./CellImage";
-import { PlayArrow, Stop } from "@mui/icons-material";
-import { CellType } from "../../../constants";
+import { Close, PlayArrow, Stop } from "@mui/icons-material";
+import { Board, Cell, Coordinates } from "../../../constants";
 
 export const SIDEBAR_WIDTH = 250;
 
 export function Sidebar({
-  map,
-  setMap,
+  board,
+  setBoard,
   editMode,
   setEditMode,
-  hasStarted,
-  setHasStarted,
+  hasSimulationStarted,
+  setHasSimulationStarted,
   robotPosition,
+  setRobotPosition,
 }: {
-  map: MapType;
-  setMap: (map: MapType) => void;
-  editMode: CellType;
-  setEditMode: (mode: CellType) => void;
-  hasStarted: boolean;
-  setHasStarted: (hasStarted: boolean) => void;
-  robotPosition: number[] | null;
+  board: Board;
+  setBoard: (map: Board) => void;
+  editMode: Cell;
+  setEditMode: (mode: Cell) => void;
+  hasSimulationStarted: boolean;
+  setHasSimulationStarted: (hasStarted: boolean) => void;
+  robotPosition: Coordinates | null;
+  setRobotPosition: (position: Coordinates | null) => void;
 }) {
-  const mapSize = map.length;
-  const [newSize, setNewSize] = useState(mapSize + "");
+  const boardSize = board.length;
+  const [newSize, setNewSize] = useState(boardSize + "");
 
   const getNewMap = (newSize: number) => {
     return Array.from({ length: newSize }, (_, i) =>
-      Array.from({ length: newSize }, (_, j) => map[i]?.[j] ?? CellType.NONE),
+      Array.from({ length: newSize }, (_, j) => board[i]?.[j] ?? Cell.NONE),
     );
   };
 
   const clear = () => {
-    setMap(
-      Array.from({ length: mapSize }, () =>
-        Array.from({ length: mapSize }, () => CellType.NONE),
+    setRobotPosition(null);
+    setBoard(
+      Array.from({ length: boardSize }, () =>
+        Array.from({ length: boardSize }, () => Cell.NONE),
       ),
     );
   };
 
-  const doesPersonExist = map
+  const doesPersonExist = board
     .flatMap((cell) => cell)
-    .find((cell) => cell === CellType.TABLE);
-  const doesCaffeeMachineExist = map
+    .find((cell) => cell === Cell.TABLE);
+  const doesCaffeeMachineExist = board
     .flatMap((cell) => cell)
-    .find((cell) => cell === CellType.COFFEE_MACHINE);
+    .find((cell) => cell === Cell.COFFEE_MACHINE);
   const isReadyForStart =
     robotPosition && doesPersonExist && doesCaffeeMachineExist;
 
+  //TODO: replace with browser-bundle
   const start = async () => {
-    setHasStarted(true);
+    setHasSimulationStarted(true);
     const res = await fetch("/api/init", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ map, position: robotPosition }),
+      body: JSON.stringify({ map: board, position: robotPosition }),
     });
 
     if (!res.ok) {
@@ -64,7 +67,7 @@ export function Sidebar({
   };
 
   const reset = async () => {
-    setHasStarted(false);
+    setHasSimulationStarted(false);
     const res = await fetch("/api/reset", {
       method: "POST",
     });
@@ -94,15 +97,15 @@ export function Sidebar({
             onChange={(e) => {
               setNewSize(e.target.value);
             }}
-            disabled={hasStarted}
+            disabled={hasSimulationStarted}
           />
           <Button
             variant="soft"
             fullWidth
             onClick={() => {
-              setMap(getNewMap(parseInt(newSize) || 1));
+              setBoard(getNewMap(parseInt(newSize) || 1));
             }}
-            disabled={hasStarted}
+            disabled={hasSimulationStarted}
           >
             Set
           </Button>
@@ -112,59 +115,59 @@ export function Sidebar({
           <ToggleButtonGroup
             value={editMode}
             onChange={(_, newValue) => {
-              setEditMode(newValue ?? CellType.NONE);
+              setEditMode(newValue ?? Cell.NONE);
             }}
             sx={{
               width: "100%",
               mb: 1,
             }}
-            disabled={hasStarted}
+            disabled={hasSimulationStarted}
           >
             <Button
               fullWidth
               sx={{ height: "30px", padding: 0 }}
-              value={CellType.ROBOT}
+              value={"robot"}
             >
-              <CellImage cellType={CellType.ROBOT} isRobot cellSize={30} />
+              <CellImage cellType={Cell.NONE} hasRobot cellSize={30} />
             </Button>
             <Button
               fullWidth
               sx={{ height: "30px", padding: 0 }}
-              value={CellType.WALL}
+              value={Cell.WALL}
             >
-              <CellImage cellType={CellType.WALL} cellSize={30} />
+              <CellImage cellType={Cell.WALL} cellSize={30} />
             </Button>
             <Button
               fullWidth
               sx={{ height: "30px", padding: 0 }}
-              value={CellType.TABLE}
+              value={Cell.TABLE}
             >
-              <CellImage cellType={CellType.TABLE} cellSize={30} />
+              <CellImage cellType={Cell.TABLE} cellSize={30} />
             </Button>
             <Button
               fullWidth
               sx={{ height: "30px", padding: 0 }}
-              value={CellType.COFFEE_MACHINE}
+              value={Cell.COFFEE_MACHINE}
+            >
+              <CellImage cellType={Cell.COFFEE_MACHINE} cellSize={30} />
+            </Button>
+            <Button
+              fullWidth
+              sx={{ height: "30px", padding: 0 }}
+              value={Cell.NONE}
             >
               <CellImage
-                cellType={CellType.COFFEE_MACHINE}
+                cellType={Cell.NONE}
                 cellSize={30}
-                isEmptyCross
+                customIcon={<Close sx={{ fontSize: 30 }} />}
               />
-            </Button>
-            <Button
-              fullWidth
-              sx={{ height: "30px", padding: 0 }}
-              value={CellType.NONE}
-            >
-              <CellImage cellType={CellType.NONE} cellSize={30} isEmptyCross />
             </Button>
           </ToggleButtonGroup>
           <Button
             variant="soft"
             fullWidth
             onClick={clear}
-            disabled={hasStarted}
+            disabled={hasSimulationStarted}
           >
             Clear
           </Button>
@@ -173,12 +176,12 @@ export function Sidebar({
       <Button
         disabled={!isReadyForStart}
         onClick={() => {
-          hasStarted ? reset() : start();
+          hasSimulationStarted ? reset() : start();
         }}
-        startDecorator={hasStarted ? <Stop /> : <PlayArrow />}
-        color={hasStarted ? "warning" : "primary"}
+        startDecorator={hasSimulationStarted ? <Stop /> : <PlayArrow />}
+        color={hasSimulationStarted ? "warning" : "primary"}
       >
-        {hasStarted ? "Stop" : "Start"}
+        {hasSimulationStarted ? "Stop" : "Start"}
       </Button>
     </div>
   );

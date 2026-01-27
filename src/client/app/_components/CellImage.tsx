@@ -1,28 +1,28 @@
-import { ReactNode } from "react";
+import { ReactElement, ReactNode } from "react";
 import wall from "@/public/wall.png";
 import robot from "@/public/robot.png";
 import caffeeMachine from "@/public/caffe_machine.png";
 import { Close, Person } from "@mui/icons-material";
-import { CellType } from "../../../constants";
+import { Cell } from "../../../constants";
 
 export function CellImage({
   cellType,
   cellSize,
-  isEmptyCross,
-  isRobot,
+  customIcon,
+  hasRobot,
 }: {
-  cellType: CellType;
+  cellType: Cell;
   cellSize: number;
-  isEmptyCross?: boolean;
-  isRobot?: boolean;
+  customIcon?: ReactElement;
+  hasRobot?: boolean;
 }) {
   return (
     <div className="h-full w-full relative flex items-center justify-center">
       {
         (
           {
-            [CellType.TABLE]: <Person sx={{ fontSize: cellSize }} />,
-            [CellType.WALL]: (
+            [Cell.TABLE]: <Person sx={{ fontSize: cellSize }} />,
+            [Cell.WALL]: (
               <img
                 src={wall.src}
                 style={{
@@ -33,8 +33,7 @@ export function CellImage({
                 }}
               />
             ),
-            [CellType.ROBOT]: null,
-            [CellType.COFFEE_MACHINE]: (
+            [Cell.COFFEE_MACHINE]: (
               <img
                 src={caffeeMachine.src}
                 style={{
@@ -46,13 +45,11 @@ export function CellImage({
                 }}
               />
             ),
-            [CellType.NONE]: isEmptyCross ? (
-              <Close sx={{ fontSize: cellSize }} />
-            ) : null,
-          } satisfies Record<CellType, ReactNode>
+            [Cell.NONE]: null,
+          } satisfies Record<Cell, ReactNode>
         )[cellType]
       }
-      {isRobot && (
+      {hasRobot && (
         <div className="absolute top-0 left-0 h-full w-full flex justify-center items-center backdrop-blur-[1px] z-20">
           <img
             src={robot.src}
@@ -65,6 +62,7 @@ export function CellImage({
           />
         </div>
       )}
+      {customIcon}
     </div>
   );
 }

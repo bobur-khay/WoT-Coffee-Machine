@@ -2,17 +2,17 @@
 import { useState } from "react";
 import { Sidebar } from "./_components/Sidebar";
 import { OfficeMap } from "./_components/OfficeMap";
-import { CellType } from "../../constants";
+import { Board, Cell, Coordinates } from "../../constants";
 
 export const PAGE_GAP = 16;
 
-export type MapType = CellType[][];
-
 export default function App() {
-  const [hasStarted, setHasStarted] = useState(false);
-  const [map, setMap] = useState<MapType>(initMap as MapType);
-  const [editMode, setEditMode] = useState<CellType>(CellType.NONE);
-  const [robotPositon, setRobotPosition] = useState<number[] | null>([8, 4]);
+  const [board, setBoard] = useState<Board>(initMap);
+  const [editMode, setEditMode] = useState<Cell>(Cell.NONE);
+  const [hasSimulationStarted, setHasStarted] = useState(false);
+  // The robot position is stored separately because it can be positioned on top of another cell
+  // The simulation doesn't start while the position is null
+  const [robotPositon, setRobotPosition] = useState<Coordinates | null>([8, 4]);
 
   return (
     <div
@@ -20,145 +20,146 @@ export default function App() {
       style={{ gap: PAGE_GAP }}
     >
       <OfficeMap
-        map={map}
+        board={board}
         editMode={editMode}
-        setMap={setMap}
-        hasStarted={hasStarted}
+        setMap={setBoard}
+        hasSimulationStarted={hasSimulationStarted}
         robotPosition={robotPositon}
         setRobotPosition={setRobotPosition}
       />
       <Sidebar
-        map={map}
-        setMap={setMap}
+        board={board}
+        setBoard={setBoard}
         editMode={editMode}
         setEditMode={setEditMode}
-        hasStarted={hasStarted}
-        setHasStarted={setHasStarted}
+        hasSimulationStarted={hasSimulationStarted}
+        setHasSimulationStarted={setHasStarted}
         robotPosition={robotPositon}
+        setRobotPosition={setRobotPosition}
       />
     </div>
   );
 }
 
-const initMap = [
+const initMap: Board = [
   [
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
   ],
   [
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
   ],
   [
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
   ],
   [
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "wall",
-    "wall",
-    "wall",
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.WALL,
+    Cell.WALL,
+    Cell.WALL,
   ],
   [
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "wall",
-    "none",
-    "wall",
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.WALL,
+    Cell.NONE,
+    Cell.WALL,
   ],
   [
-    "none",
-    "none",
-    "table",
-    "none",
-    "none",
-    "none",
-    "none",
-    "wall",
-    "none",
-    "wall",
+    Cell.NONE,
+    Cell.NONE,
+    Cell.TABLE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.WALL,
+    Cell.NONE,
+    Cell.WALL,
   ],
   [
-    "none",
-    "none",
-    "table",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
+    Cell.NONE,
+    Cell.NONE,
+    Cell.TABLE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
   ],
   [
-    "none",
-    "none",
-    "table",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "caffe_machine",
-    "none",
+    Cell.NONE,
+    Cell.NONE,
+    Cell.TABLE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.COFFEE_MACHINE,
+    Cell.NONE,
   ],
   [
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
   ],
   [
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
-    "none",
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
+    Cell.NONE,
   ],
 ];

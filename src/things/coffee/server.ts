@@ -6,8 +6,7 @@ import {
   CoffeeMachineState,
   CoffeeType,
   Strength,
-} from "../constants";
-import { describe } from "node:test";
+} from "../../constants";
 
 enum ErrorType {
   NOT_READY = "NOT_READY",

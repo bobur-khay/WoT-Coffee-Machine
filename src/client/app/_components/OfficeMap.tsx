@@ -1,5 +1,4 @@
 "use client";
-import { MapType } from "@/app/page";
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import { PAGE_PADDING } from "@/app/layout";
 import { CellImage } from "./CellImage";
@@ -13,56 +12,69 @@ import {
   Typography,
 } from "@mui/joy";
 
-import { Strength, CoffeeType, CellType, Order } from "../../../constants";
+import {
+  Strength,
+  CoffeeType,
+  Cell,
+  Order,
+  Coordinates,
+  Board,
+  EditMode,
+} from "../../../constants";
 
 export function OfficeMap({
-  map,
+  board,
   setMap,
   editMode,
-  hasStarted,
+  hasSimulationStarted,
   robotPosition,
   setRobotPosition,
 }: {
-  map: MapType;
-  setMap: Dispatch<SetStateAction<MapType>>;
-  editMode: CellType;
-  hasStarted: boolean;
-  robotPosition: number[] | null;
-  setRobotPosition: (pos: number[] | null) => void;
+  board: Board;
+  setMap: Dispatch<SetStateAction<Board>>;
+  editMode: EditMode;
+  hasSimulationStarted: boolean;
+  robotPosition: Coordinates | null;
+  setRobotPosition: (pos: Coordinates | null) => void;
 }) {
-  const mapSize = map.length;
-  const [mapSizePx, setMapSizePx] = useState(0);
+  // The height/width of the board in cells count
+  const boardSize = board.length;
+  const [boardSizePx, setMapSizePx] = useState(0);
   const [isMouseDown, setIsMouseDown] = useState(false);
-  const [modalOrder, setModalOrder] = useState<Order | null>(null);
+  const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
   const [coffeeMachineProgress, setCoffeeMachineProgress] = useState(0);
 
-  const hasStartedRef = useRef(hasStarted);
+  const hasSimulationStartedRef = useRef(hasSimulationStarted);
 
-  const cellSize = (mapSizePx - 2) / mapSize;
+  const cellSize = (boardSizePx - 2) / boardSize;
+  // Configure the pixel size of the board for responsiveness
   const configMap = () => {
     const sidebar = document.getElementById("sidebar");
     const sidebarWidth = sidebar?.offsetWidth ?? 0;
     const screenWidth = document.body.clientWidth - 2 * PAGE_PADDING;
     const sidebarHeight = sidebar?.offsetHeight ?? 0;
-    const mapMaxWidth = screenWidth - sidebarWidth - 16;
-    let mapSizePx = 0;
-    if (mapMaxWidth < sidebarHeight) {
-      mapSizePx = mapMaxWidth;
+    const boardMaxWidth = screenWidth - sidebarWidth - 16;
+    let boardSizePx = 0;
+    if (boardMaxWidth < sidebarHeight) {
+      boardSizePx = boardMaxWidth;
     } else {
-      mapSizePx = sidebarHeight;
+      boardSizePx = sidebarHeight;
     }
-    setMapSizePx(mapSizePx);
+    setMapSizePx(boardSizePx);
   };
 
   useEffect(() => {
+    // Responsive Design
     configMap();
     window.addEventListener("resize", configMap);
+    // Drag and Draw
     window.addEventListener("mousedown", () => {
       setIsMouseDown(true);
     });
     window.addEventListener("mouseup", () => {
       setIsMouseDown(false);
     });
+    //Clean up
     return () => {
       window.removeEventListener("resize", configMap);
       window.removeEventListener("mousedown", () => {
@@ -74,13 +86,14 @@ export function OfficeMap({
     };
   }, []);
 
+  // TODO: replace with browser-bundle
   useEffect(() => {
-    if (!hasStarted) {
+    if (!hasSimulationStarted) {
       setCoffeeMachineProgress(0);
     }
-    hasStartedRef.current = hasStarted;
+    hasSimulationStartedRef.current = hasSimulationStarted;
     (async () => {
-      while (hasStartedRef.current) {
+      while (hasSimulationStartedRef.current) {
         const coffeeRes = await fetch("api/status/coffee", {
           cache: "no-store",
         });
@@ -92,25 +105,25 @@ export function OfficeMap({
         await new Promise((r) => setTimeout(r, 200));
       }
     })();
-  }, [hasStarted]);
+  }, [hasSimulationStarted]);
 
   const setCell = (x: number, y: number) => {
-    if (editMode === CellType.ROBOT) {
+    if (editMode === "robot") {
       setRobotPosition([x, y]);
+    } else if (
+      editMode === Cell.NONE &&
+      x === robotPosition?.[0] &&
+      y === robotPosition[1]
+    ) {
+      setRobotPosition(null);
     } else {
-      if (
-        editMode === CellType.NONE &&
-        x === robotPosition?.[0] &&
-        y === robotPosition[1]
-      ) {
-        setRobotPosition(null);
-      }
       setMap((prev) => {
         let prevMap = [...prev];
-        if (editMode === CellType.COFFEE_MACHINE) {
+        // There can be one coffee machine at a time
+        if (editMode === Cell.COFFEE_MACHINE) {
           prevMap = prevMap.map((row) =>
             row.map((cell) =>
-              cell === CellType.COFFEE_MACHINE ? CellType.NONE : cell,
+              cell === Cell.COFFEE_MACHINE ? Cell.NONE : cell,
             ),
           );
         }
@@ -120,12 +133,13 @@ export function OfficeMap({
     }
   };
 
+  // TODO: replace with browser-bundle
   const order = async () => {
-    setModalOrder(null);
+    setCurrentOrder(null);
     const res = await fetch("/api/order", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(modalOrder),
+      body: JSON.stringify(currentOrder),
     });
     if (!res.ok) {
       alert("An error occured, pls refresh and try again");
@@ -136,24 +150,24 @@ export function OfficeMap({
     <div
       className="gap-0 flex flex-wrap border border-gray-600 content-start select-none"
       style={{
-        width: mapSizePx,
-        height: mapSizePx,
+        width: boardSizePx,
+        height: boardSizePx,
       }}
     >
-      {modalOrder && (
-        <Modal open onClose={() => setModalOrder(null)}>
+      {currentOrder && (
+        <Modal open onClose={() => setCurrentOrder(null)}>
           <ModalDialog>
             <ModalClose />
             <Typography level="title-lg">
               Table Order:
-              {`(${modalOrder?.tableNr[0]}, ${modalOrder?.tableNr[1]})`}
+              {`(${currentOrder?.tableNr[0]}, ${currentOrder?.tableNr[1]})`}
             </Typography>
             <Typography level="title-md">Caffee Type</Typography>
             <ToggleButtonGroup
-              value={modalOrder.coffeeType}
+              value={currentOrder.coffeeType}
               onChange={(_, value) => {
                 value &&
-                  setModalOrder((prev) => {
+                  setCurrentOrder((prev) => {
                     return (
                       prev && {
                         ...prev,
@@ -173,10 +187,10 @@ export function OfficeMap({
             </ToggleButtonGroup>
             <Typography level="title-md">Strength</Typography>
             <ToggleButtonGroup
-              value={modalOrder.strength}
+              value={currentOrder.strength}
               onChange={(_, value) => {
                 value &&
-                  setModalOrder(
+                  setCurrentOrder(
                     (prev) =>
                       prev && {
                         ...prev,
@@ -198,24 +212,27 @@ export function OfficeMap({
           </ModalDialog>
         </Modal>
       )}
-      {map.map((row, y) =>
+      {board.map((row, y) =>
         row.map((cell, x) => (
           <div
             className={tm(
               "relative border-t border-r border-gray-300 flex justify-center items-center",
-              (!hasStarted || cell === CellType.TABLE) && "hover:bg-blue-50",
+              (!hasSimulationStarted || cell === Cell.TABLE) &&
+                "hover:bg-blue-50",
             )}
             key={`${x}${y}`}
             style={{
               height: cellSize,
               width: cellSize,
               cursor:
-                !hasStarted || cell === CellType.TABLE ? "pointer" : "default",
+                !hasSimulationStarted || cell === Cell.TABLE
+                  ? "pointer"
+                  : "default",
             }}
             onClick={() =>
-              hasStarted
-                ? cell === CellType.TABLE &&
-                  setModalOrder({
+              hasSimulationStarted
+                ? cell === Cell.TABLE &&
+                  setCurrentOrder({
                     tableNr: [x, y],
                     coffeeType: CoffeeType.CAPPUCCINO,
                     strength: Strength.MEDIUM,
@@ -223,7 +240,7 @@ export function OfficeMap({
                 : setCell(x, y)
             }
             onMouseMove={() => {
-              if (!hasStarted && isMouseDown) {
+              if (!hasSimulationStarted && isMouseDown) {
                 setCell(x, y);
               }
             }}
@@ -231,7 +248,7 @@ export function OfficeMap({
             <CellImage
               cellType={cell}
               cellSize={cellSize}
-              isRobot={x === robotPosition?.[0] && y === robotPosition?.[1]}
+              hasRobot={x === robotPosition?.[0] && y === robotPosition?.[1]}
             />
             <div
               className={tm(
@@ -240,7 +257,7 @@ export function OfficeMap({
               )}
               style={{
                 height:
-                  cell === CellType.COFFEE_MACHINE
+                  cell === Cell.COFFEE_MACHINE
                     ? `${coffeeMachineProgress}%`
                     : 0,
                 zIndex: 15,
