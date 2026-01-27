@@ -5,11 +5,12 @@ export async function POST(request: Request) {
   const { strength, tableNr, coffeeType } = (await request.json()) as Order;
   const { robot, coffeeMachine } = clientThings;
 
-  await coffeeMachine?.invokeAction("order", {
+  const coffee = await coffeeMachine?.invokeAction("order", {
     strength,
     coffeeType,
   });
   await robot?.invokeAction("order", tableNr);
 
+  console.log(JSON.stringify(coffee));
   return new Response(null, { status: 200 });
 }

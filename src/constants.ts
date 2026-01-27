@@ -8,7 +8,7 @@ export enum Strength {
 export enum CoffeeType {
   ESPRESSO = "Espresso",
   CAPPUCCINO = "Cappuccino",
-  LATTE_MACHIATO = "Latte Macchiato",
+  LATTE_MACHIATTO = "Latte Macchiato",
 }
 
 export enum Cell {
@@ -52,3 +52,6 @@ export const clientThings: {
   coffeeMachine?: WoT.ConsumedThing;
   robot?: WoT.ConsumedThing;
 } = {};
+
+export const robotTdUrl = "http://localhost:8081/robot";
+export const coffeeMachineTdUrl = "coap://localhost:8080/coffee-machine";

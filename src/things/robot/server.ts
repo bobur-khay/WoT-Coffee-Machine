@@ -1,11 +1,12 @@
 import { Servient } from "@node-wot/core";
-import { HttpClientFactory, HttpServer } from "@node-wot/binding-http";
+import { HttpServer } from "@node-wot/binding-http";
 import {
   Cell,
-  clientThings,
   CoffeeMachineState,
+  coffeeMachineTdUrl,
   coordinatesSchema,
 } from "../../constants";
+import { CoapClientFactory } from "@node-wot/binding-coap";
 
 enum RobotState {
   OFF = "off",
@@ -40,11 +41,11 @@ servient.addServer(new HttpServer({ port: 8081 }));
 servient.start().then(async (WoT) => {
   try {
     const clientServient = new Servient();
-    clientServient.addClientFactory(new HttpClientFactory(null));
+    clientServient.addClientFactory(new CoapClientFactory());
     const client = await clientServient.start();
-    const coffeeMachineTd = await client.requestThingDescription(
-      "http://localhost:8080/coffee-machine",
-    );
+    // TODO: move to initialize
+    const coffeeMachineTd =
+      await client.requestThingDescription(coffeeMachineTdUrl);
     const coffeeMachineThing = await client.consume(coffeeMachineTd);
     console.log("Robot starting...");
     const thing = await WoT.produce(robotSchema);
@@ -52,6 +53,7 @@ servient.start().then(async (WoT) => {
 
     const initialize = async (params: any) => {
       const { map, position } = await params.value();
+      console.log("robot position", position);
       const coffeeMachine = findCoffeeMachine(map);
       if (!coffeeMachine) {
         throw new Error("Coffee machine not found");
@@ -97,6 +99,7 @@ servient.start().then(async (WoT) => {
       // go to coffee machine
       for (let newPosition of path) {
         robot.position = newPosition;
+        thing.emitPropertyChange("position");
         console.log("position", newPosition);
         await new Promise((r) => setTimeout(r, 400));
       }
@@ -117,6 +120,7 @@ servient.start().then(async (WoT) => {
       coffeeMachineThing.invokeAction("brew");
       for (let newPosition of path) {
         robot.position = newPosition;
+        thing.emitPropertyChange("position");
         await new Promise((r) => setTimeout(r, 400));
       }
       robot.queue.shift();
@@ -254,6 +258,10 @@ servient.start().then(async (WoT) => {
       "position",
       async () => robot?.position ?? null,
     );
+    thing.setPropertyObserveHandler(
+      "position",
+      async () => robot?.position ?? null,
+    );
     thing.setActionHandler("init", initialize);
     thing.setActionHandler("order", order);
     thing.setActionHandler("reset", async () => {
@@ -286,12 +294,11 @@ const robotSchema = {
         RobotState.WAITING_FOR_COFFEE,
       ],
       readOnly: true,
-      observable: true,
     },
     position: {
       description: "Current coordinates of the robot",
+      observable: true,
       ...coordinatesSchema,
-      anyOf: [{ type: "array" as const }, { type: "null" as const }],
     },
   },
   actions: {

@@ -20,7 +20,11 @@ import {
   Coordinates,
   Board,
   EditMode,
+  robotTdUrl,
 } from "../../../constants";
+
+//@ts-expect-error not typed
+import { Core, Http } from "@node-wot/browser-bundle";
 
 export function OfficeMap({
   board,
@@ -42,7 +46,10 @@ export function OfficeMap({
   const [boardSizePx, setMapSizePx] = useState(0);
   const [isMouseDown, setIsMouseDown] = useState(false);
   const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
-  const [coffeeMachineProgress, setCoffeeMachineProgress] = useState(0);
+  const [coffeeMachineState, setCoffeeMachineState] = useState({
+    progress: 0,
+    error: "",
+  });
 
   const hasSimulationStartedRef = useRef(hasSimulationStarted);
 
@@ -86,22 +93,32 @@ export function OfficeMap({
     };
   }, []);
 
-  // TODO: replace with browser-bundle
   useEffect(() => {
     if (!hasSimulationStarted) {
-      setCoffeeMachineProgress(0);
+      setCoffeeMachineState({
+        progress: 0,
+        error: "",
+      });
     }
     hasSimulationStartedRef.current = hasSimulationStarted;
     (async () => {
+      const servient = new Core.Servient();
+      servient.addClientFactory(new Http.HttpClientFactory());
+      const WoT = await servient.start();
+      const robotTd = await WoT.requestThingDescription(robotTdUrl);
+      const robot = await WoT.consume(robotTd);
+
+      robot.observeProperty("position", async (position: any) => {
+        position && setRobotPosition(await position.value());
+      });
+
       while (hasSimulationStartedRef.current) {
         const coffeeRes = await fetch("api/status/coffee", {
           cache: "no-store",
         });
         const status = await coffeeRes.json();
-        setCoffeeMachineProgress(status);
-        const robotRes = await fetch("api/status/robot", { cache: "no-store" });
-        const position = await robotRes.json();
-        position && setRobotPosition(position);
+        console.log("coffee status", status);
+        setCoffeeMachineState(status);
         await new Promise((r) => setTimeout(r, 200));
       }
     })();
@@ -181,8 +198,8 @@ export function OfficeMap({
                 {CoffeeType.CAPPUCCINO}
               </Button>
               <Button value={CoffeeType.ESPRESSO}>{CoffeeType.ESPRESSO}</Button>
-              <Button value={CoffeeType.LATTE_MACHIATO}>
-                {CoffeeType.LATTE_MACHIATO}
+              <Button value={CoffeeType.LATTE_MACHIATTO}>
+                {CoffeeType.LATTE_MACHIATTO}
               </Button>
             </ToggleButtonGroup>
             <Typography level="title-md">Strength</Typography>
@@ -253,14 +270,15 @@ export function OfficeMap({
             <div
               className={tm(
                 "absolute bottom-0 w-full bg-amber-200",
-                coffeeMachineProgress === 100 && "bg-emerald-200",
+                coffeeMachineState.progress === 100 && "bg-emerald-200",
+                coffeeMachineState.error && "bg-red-300",
               )}
               style={{
                 height:
                   cell === Cell.COFFEE_MACHINE
-                    ? `${coffeeMachineProgress}%`
+                    ? `${coffeeMachineState.progress}%`
                     : 0,
-                zIndex: 15,
+                zIndex: 5,
               }}
             />
           </div>

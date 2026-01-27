@@ -1,20 +1,12 @@
 // Required steps to create a servient for creating a thing
 import { Servient } from "@node-wot/core";
-import { HttpServer } from "@node-wot/binding-http";
+import { CoapServer } from "@node-wot/binding-coap";
 import {
   CoffeeConfig,
   CoffeeMachineState,
   CoffeeType,
   Strength,
 } from "../../constants";
-
-enum ErrorType {
-  NOT_READY = "NOT_READY",
-  NOT_ENOUGH_WATER = "NOT_ENOUGH_WATER",
-  NOT_ENOUGH_BEANS = "NOT_ENOUGH_BEANS",
-  BIN_FULL = "BIN_FULL",
-  UNKNOWN = "UNKNOWN",
-}
 
 class CoffeeMachine {
   constructor(
@@ -23,20 +15,25 @@ class CoffeeMachine {
     public beansAmount: number,
     public binLevel: number,
     public progress: number,
-    public queue: CoffeeConfig[], // first position is the first order
+    public queue: CoffeeConfig[], // [first order, ..., last order]
   ) {}
 }
 
 const servient = new Servient();
-servient.addServer(new HttpServer());
+servient.addServer(
+  new CoapServer({
+    port: 8080,
+  }),
+);
 
 servient.start().then(async (WoT) => {
   console.log("Coffee Machine starting...");
+  let errorMessage: string = "";
   try {
     const thing = await WoT.produce(coffeeMachineTd);
     const coffeeMachine = new CoffeeMachine(
       CoffeeMachineState.WAITING,
-      100,
+      10,
       100,
       0,
       0,
@@ -62,17 +59,19 @@ servient.start().then(async (WoT) => {
         return undefined;
       }
       if (coffeeMachine.state !== CoffeeMachineState.WAITING) {
-        throw new Error(ErrorType.NOT_READY);
+        errorMessage = "Coffee machine not ready";
+      } else if (coffeeMachine.waterLevel < 10) {
+        errorMessage = "Not enough water";
+      } else if (coffeeMachine.beansAmount < 10) {
+        errorMessage = "Not enough beans";
+      } else if (coffeeMachine.binLevel > 90) {
+        errorMessage = "Bin is full";
       }
-      if (coffeeMachine.waterLevel < 10) {
-        throw new Error(ErrorType.NOT_ENOUGH_WATER);
+      if (errorMessage) {
+        coffeeMachine.progress = 100;
+        return undefined;
       }
-      if (coffeeMachine.beansAmount < 10) {
-        throw new Error(ErrorType.NOT_ENOUGH_BEANS);
-      }
-      if (coffeeMachine.binLevel > 90) {
-        throw new Error(ErrorType.BIN_FULL);
-      }
+
       console.log("Brewing ", order.coffeeType, order.strength);
       coffeeMachine.state = CoffeeMachineState.BREWING;
 
@@ -88,9 +87,9 @@ servient.start().then(async (WoT) => {
         await new Promise((r) => setTimeout(r, 1000));
       }
       coffeeMachine.state = CoffeeMachineState.COFEE_READY;
-      console.log("shifting queue");
+      console.log(order.coffeeType, order.strength, "ready");
       coffeeMachine.queue.shift();
-      console.log("coffee ready, waiting...");
+      console.log("coffee ready, waiting for robot...");
       return undefined;
     };
 
@@ -98,6 +97,7 @@ servient.start().then(async (WoT) => {
       "progress",
       async () => coffeeMachine.progress,
     );
+    thing.setPropertyReadHandler("error", async () => errorMessage);
     thing.setPropertyReadHandler("state", async () => coffeeMachine.state);
     thing.setPropertyReadHandler(
       "waterLevel",
@@ -121,6 +121,7 @@ servient.start().then(async (WoT) => {
       return undefined;
     });
     thing.setActionHandler("reset", async () => {
+      errorMessage = "";
       coffeeMachine.progress = 0;
       coffeeMachine.state = CoffeeMachineState.WAITING;
       coffeeMachine.queue = [];
@@ -141,15 +142,21 @@ const coffeeMachineTd = {
   description: "Test TD for learning purposes",
   properties: {
     progress: {
+      description: "The progress of the current brewage in percent",
       type: "integer" as const,
       minimum: 0,
       maximum: 100,
       readonly: true,
-      observable: true,
+    },
+    error: {
+      description: "Any error thrown will save its message in this property",
+      type: "string" as const,
+      readonly: true,
     },
     state: {
       type: "string" as const,
-      description: "Current state of the coffee machine",
+      description:
+        "Current state of the coffee machine (Waiting, Brewing, Coffee Ready)",
       enum: [
         CoffeeMachineState.WAITING,
         CoffeeMachineState.BREWING,
@@ -188,14 +195,16 @@ const coffeeMachineTd = {
         properties: {
           coffeeType: {
             type: "string" as const,
+            description: "Coffee type (Cappuccino, Espresso, Latte Machiatto)",
             enum: [
               CoffeeType.CAPPUCCINO,
               CoffeeType.ESPRESSO,
-              CoffeeType.LATTE_MACHIATO,
+              CoffeeType.LATTE_MACHIATTO,
             ],
           },
           strength: {
             type: "string" as const,
+            description: "Coffee strength (No caffeine, Light, Medium, Strong)",
             enum: [
               Strength.NO_CAFFEINE,
               Strength.LIGHT,
@@ -207,34 +216,13 @@ const coffeeMachineTd = {
       },
     },
     brew: {
-      description:
-        "Starts the brewing process with the coffee type as a parameter",
+      description: "Starts the brewing the first order in the queue",
     },
     next: {
       description: "Starts with the next order",
     },
     reset: {
       description: "Returns to inital state",
-    },
-  },
-  events: {
-    errorAlert: {
-      description: "Emitted when there is an error during brewage",
-      data: {
-        code: {
-          type: "string" as const,
-          enum: [
-            ErrorType.NOT_ENOUGH_WATER,
-            ErrorType.NOT_ENOUGH_BEANS,
-            ErrorType.BIN_FULL,
-            ErrorType.UNKNOWN,
-          ],
-        },
-        timestamp: {
-          type: "string" as const,
-          format: "date-time",
-        },
-      },
     },
   },
 };
