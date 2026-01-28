@@ -6,7 +6,8 @@
   "scripts": {
     "dev:client": "cd src/client && npm run dev",
     "dev:robot": "cd src/things/robot && npm run dev:robot",
-    "dev:coffee": "cd src/things/coffee && npm run dev:coffee"
+    "dev:coffee": "cd src/things/coffee && npm run dev:coffee",
+    "install:all": "pnpm --prefix src/client install && pnpm --prefix src/things install"
   },
   "keywords": [],
   "author": "",

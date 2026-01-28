@@ -8,13 +8,14 @@ import {
   CoffeeMachineStatus,
   Coordinates,
   EditMode,
+  INIT_MAP,
   Order,
 } from "../../constants";
 
 export const PAGE_GAP = 16;
 
 export default function App() {
-  const [board, setBoard] = useState<Board>(initMap);
+  const [board, setBoard] = useState<Board>(INIT_MAP);
   const [editMode, setEditMode] = useState<EditMode>(Cell.NONE);
   const [hasSimulationStarted, setHasStarted] = useState(false);
   // The robot position is stored separately because it can be positioned on top of another cell
@@ -61,126 +62,3 @@ export default function App() {
     </div>
   );
 }
-
-const initMap: Board = [
-  [
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-  ],
-  [
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-  ],
-  [
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-  ],
-  [
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.WALL,
-    Cell.WALL,
-    Cell.WALL,
-  ],
-  [
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.WALL,
-    Cell.NONE,
-    Cell.WALL,
-  ],
-  [
-    Cell.NONE,
-    Cell.NONE,
-    Cell.TABLE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.WALL,
-    Cell.NONE,
-    Cell.WALL,
-  ],
-  [
-    Cell.NONE,
-    Cell.NONE,
-    Cell.TABLE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-  ],
-  [
-    Cell.NONE,
-    Cell.NONE,
-    Cell.TABLE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.COFFEE_MACHINE,
-    Cell.NONE,
-  ],
-  [
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-  ],
-  [
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-    Cell.NONE,
-  ],
-];

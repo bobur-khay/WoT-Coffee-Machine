@@ -27,8 +27,8 @@ WoT tutorial/
 
 ## Features
 
-- **WoT Coffee Machine**: Simulates a smart coffee machine with order queue, state, and error handling.
-- **WoT Robot**: Simulates a delivery robot that fetches coffee and delivers it to tables.
+- **WoT Coffee Machine**: Simulates a smart coffee machine with order queue, state, and error handling. Uses the CoAP protocol.
+- **WoT Robot**: Simulates a delivery robot that fetches coffee and delivers it to tables. Uses standard HTTP protocol.
 - **Web Client**: Interactive UI to place orders, view robot/coffee status, and edit the office map.
 - **API**: Next.js API routes for initializing, ordering, resetting, and status polling.
 
@@ -37,12 +37,20 @@ WoT tutorial/
 ### Prerequisites
 
 - [Node.js](https://nodejs.org/) (v18+ recommended)
-- [pnpm](https://pnpm.io/) (or npm/yarn)
+- [pnpm](https://pnpm.io/) (for fast, efficient package management)
+
+  _Hint: Install pnpm globally with:_
+
+  ```bash
+  npm install -g pnpm
+  ```
 
 ### Install Dependencies
 
+To install dependencies in both the client and things subfolders at once, from the root folder use:
+
 ```bash
-pnpm install
+pnpm install:all
 ```
 
 ### Running the Project
@@ -52,7 +60,7 @@ Open three terminals and run each service:
 1. **Client (Web UI):**
 
    ```bash
-   pnpm run dev:client
+   pnpm dev:client
    ```
 
    Runs the Next.js client at http://localhost:3000
@@ -60,16 +68,20 @@ Open three terminals and run each service:
 2. **Coffee Machine Servient:**
 
    ```bash
-   pnpm run dev:coffee
+   pnpm dev:coffee
    ```
 
    Starts the WoT coffee machine on CoAP (default port 8080)
 
 3. **Robot Servient:**
+
    ```bash
-   pnpm run dev:robot
+   pnpm dev:robot
    ```
+
    Starts the WoT robot on HTTP (default port 8081)
+
+   **Note:** The robot servient must be started _after_ the coffee machine servient is running, as it depends on the coffee machine being available.
 
 ### Usage
 
