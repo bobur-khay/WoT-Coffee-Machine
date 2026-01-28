@@ -144,13 +144,11 @@ servient.start().then(async (WoT) => {
         return map[y][x] === Cell.NONE;
       };
 
-      // Helper for heuristic (Octile distance for 8-way movement)
+      // Helper for heuristic (Manhattan distance for 4-way movement)
       const getHeuristic = (x: number, y: number): number => {
         const dx = Math.abs(x - target[0]);
         const dy = Math.abs(y - target[1]);
-        const D = 1;
-        const D2 = Math.SQRT2;
-        return D * (dx + dy) + (D2 - 2 * D) * Math.min(dx, dy);
+        return dx + dy;
       };
 
       const openList: Node[] = [];
@@ -194,17 +192,13 @@ servient.start().then(async (WoT) => {
         openList.splice(lowestIndex, 1);
         closedSet.add(`${current.x},${current.y}`);
 
-        // Generate neighbors (8 directions)
+        // Generate neighbors (4 directions, no diagonals)
         // dx, dy, cost
         const directions = [
           [0, -1, 1],
           [0, 1, 1],
           [-1, 0, 1],
-          [1, 0, 1], // Cardinal
-          [-1, -1, Math.SQRT2],
-          [1, -1, Math.SQRT2], // Diagonals
-          [-1, 1, Math.SQRT2],
-          [1, 1, Math.SQRT2],
+          [1, 0, 1], // Cardinal only
         ];
 
         for (const [dx, dy, cost] of directions) {
