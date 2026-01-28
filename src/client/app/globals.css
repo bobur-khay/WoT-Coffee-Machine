@@ -4,3 +4,17 @@ body {
   background-color: rgb(240, 240, 255);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Hide Next.js Error Overlay */
+nextjs-portal {
+  display: none !important;
+}
+
+/* Fallback for older versions or specific overlay types */
+#nextjs-error-overlay {
+  display: none !important;
+}
+
+#devtools-indicator{
+  display: none !important;
+}
